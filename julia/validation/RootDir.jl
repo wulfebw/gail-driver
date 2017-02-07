@@ -1,1 +1,1 @@
-ROOT_FILEPATH = "/home/alex/stanford_dev/gail-driver/"
+ROOT_FILEPATH = "/Users/wulfebw/Programming/gail-driver/"

@@ -174,16 +174,19 @@ function SimParams(trajdatas::Dict{Int, Trajdata}, segments::Vector{TrajdataSegm
         )
     playback_reactive_scene_buffer = Scene()
 
-    filepath = joinpath(ROOT_FILEPATH,"julia","validation","models","gail_gru.h5")
-    iteration = 413
+    filepath = joinpath(ROOT_FILEPATH, "julia", "validation", "models", "gail_gru.h5")
+    iteration = 499
     driver_model = load_gru_driver(filepath, iteration)
 
-    SimParams(
+    println("Building SimParams")
+    params = SimParams(
         col_weight, off_weight, rev_weight, jrk_weight, acc_weight, cen_weight, ome_weight, use_debug_reward,
         context, prime_history, ego_action_type, safety_policy,
         use_playback_reactive, playback_reactive_model,
         playback_reactive_threshold_brake, playback_reactive_scene_buffer, model_all, driver_model,
         trajdatas, segments, nsteps, 0, simstates, features, extractor)
+    println("built params")
+    return params
 end
 function gen_simparams(trajdata_indeces::Vector,
     col_weight::Float64,
@@ -321,6 +324,7 @@ function gen_simparams(batch_size::Int, args::Dict)
             batch_size, prime_history, nsteps, ego_action_type, extractor)
     else
         trajdata_indeces = get(args, "trajdata_indeces", [1,2,3,4,5,6])
+        println("generating sim params")
         gen_simparams(trajdata_indeces,
             col_weight, off_weight, rev_weight, jrk_weight, acc_weight, cen_weight, ome_weight,
             use_debug_reward, use_playback_reactive, model_all, playback_reactive_threshold_brake,

@@ -20,13 +20,13 @@ end
 include("multifeatureset.jl")
 
 extract_core = true
-extract_temporal = true
-extract_well_behaved = false
+extract_temporal = false
+extract_well_behaved = true
 extract_neighbor_features = false
 extract_carlidar_rangerate = true
 carlidar_nbeams = 20
 roadlidar_nbeams = 0
-roadlidar_nlanes = 0
+roadlidar_nlanes = 2
 carlidar_max_range = 100.0 # [m]
 roadlidar_max_range = 50.0 # [m]
 
@@ -56,6 +56,7 @@ lane_portion_max_range = roadlidar_max_range + culling_fidelity/2 + 5.0 # [m] no
 err = 0.0
 
 for trajdata_path in TRAJDATA_PATHS
+
     println("FILE: ", trajdata_path); tic()
     trajdata = load_trajdata(trajdata_path)
 
@@ -96,19 +97,40 @@ for trajdata_path in TRAJDATA_PATHS
             end
         end
         toc()
+        println("$(segind) / $(length(segments))")
+        if segind > 5
+            break
+        end
     end
 
     # Save it all to a file
     println("saving...")
-    outfile = ("./../2d_drive_data/data_" * splitdir(splitext(trajdata_path)[1])[2]
+    outfile = ("../../data/traces/" * splitdir(splitext(trajdata_path)[1])[2]
+    * "_core" * string(Int(extract_core))
+    * "_temp" * string(Int(extract_temporal))
+    * "_well" * string(Int(extract_well_behaved))
+    * "_neig" * string(Int(extract_neighbor_features))
+    * "_carl" * string(Int(carlidar_nbeams > 0))
+    * "_roal" * string(Int(roadlidar_nbeams > 0))
+    * "_clrr" * string(Int(extract_carlidar_rangerate))
+    * "_mtl" * string(100)
     * "_clb" * string(carlidar_nbeams)
     * "_rlb" * string(roadlidar_nbeams)
     * "_rll" * string(roadlidar_nlanes)
     * "_clmr" * string(Int(carlidar_max_range))
     * "_rlmr" * string(Int(roadlidar_max_range))
-    * ".jld")
+    * ".h5")
 
-    #outfile = "./data_" * splitdir(splitext(trajdata_path)[1])[2] * ".jld"
-    JLD.save(outfile, "features", featureset, "targets", targetset, "intervals", interval_starts, "timestep", ΔT)
+    println(featureset[1:10, 1])
+        println(featureset[1:10, 2])
+            println(featureset[1:10, 3])
+    readline()
+
+    h5open(outfile, "w") do file
+        write(file, "obs_B_T_Do", featureset)
+        write(file, "a_B_T_Da", targetset)
+        write(file, "len_B", interval_starts)
+        write(file, "timestep", ΔT)
+    end
     toc()
 end

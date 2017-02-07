@@ -65,7 +65,6 @@ KUBE_DEFAULT_NODE_SELECTOR = {
 }
 
 MUJOCO_KEY_PATH = osp.expanduser("~/.mujoco")
-
 ENV = {}
 
 if osp.exists(osp.join(osp.dirname(__file__), "config_personal.py")):

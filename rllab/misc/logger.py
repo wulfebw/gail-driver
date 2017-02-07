@@ -31,7 +31,7 @@ _text_fds = {}
 _tabular_fds = {}
 _tabular_header_written = set()
 
-_snapshot_dir = None
+_snapshot_dir = '/Users/wulfebw/Programming/gail-driver/data/snapshots/'
 _snapshot_mode = 'all'
 _snapshot_gap = 1
 

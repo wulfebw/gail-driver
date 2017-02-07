@@ -95,7 +95,6 @@ function load_gru_driver(
         copy!(net[layer_sym].b, b)
         push!(net, ELU, Symbol(layer*"ELU"), lastindex(net))
     end
-
     # Add GRU layer
     if gru_layer
         # output layer
@@ -134,7 +133,6 @@ function load_gru_driver(
         push!(net, Variable(:output, output(net[:output_layer])), lastindex(net))
         basepath = @sprintf("iter%05d/mlp_policy", iteration)
     end
-
     if gru_layer
         logstdevs = vec(h5read(filepath, joinpath(basepath, "output_log_std/param:0")))::Vector{Float32}
     else

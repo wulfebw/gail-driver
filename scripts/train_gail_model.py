@@ -1,3 +1,7 @@
+
+import sys
+sys.path.append('/Users/wulfebw/Programming/gail-driver')
+
 import gym
 import argparse
 import calendar
@@ -137,42 +141,52 @@ else:
     r_hspec = args.hspec
 
 env_id = "Auto2D-v0"
+# ngsim_set = "trajdata_i101_trajectories-0750am-0805am"
+# expert_data_path = expert_trajs_path + \
+#     '/{}_core{}_temp{}_well{}_neig{}_carl{}_roal{}_clrr{}_mtl{}_clb{}_rlb{}_rll{}_clmr{}_rlmr{}.h5'.format(ngsim_set, 
+#     int(args.extract_core), 0, int(args.extract_well_behaved),
+#     int(args.extract_neighbor_features), int(args.extract_carlidar), int(args.extract_roadlidar),
+#     int(args.extract_carlidar_rangerate), 100, args.carlidar_nbeams, args.roadlidar_nbeams,2,100,50)
 expert_data_path = expert_trajs_path + \
-	'/core{}_temp{}_well{}_neig{}_carl{}_roal{}_clrr{}_mtl{}_clb{}_rlb{}_rll{}_clmr{}_rlmr{}_seed{}.h5'.format(
-	int(args.extract_core), 0, int(args.extract_well_behaved),
-	int(args.extract_neighbor_features), int(args.extract_carlidar), int(args.extract_roadlidar),
-	int(args.extract_carlidar_rangerate), 100, args.carlidar_nbeams, args.roadlidar_nbeams,2,100,50,456)
+    '/core{}_temp{}_well{}_neig{}_carl{}_roal{}_clrr{}_mtl{}_clb{}_rlb{}_rll{}_clmr{}_rlmr{}_seed{}.h5'.format(
+    int(args.extract_core), 0, int(args.extract_well_behaved),
+    int(args.extract_neighbor_features), int(args.extract_carlidar), int(args.extract_roadlidar),
+    int(args.extract_carlidar_rangerate), 100, args.carlidar_nbeams, args.roadlidar_nbeams,2,100,50,456)
+
+print(expert_data_path)
 
 env_dict = {'trajdata_indeces': args.trajdatas,
-	'nsteps': args.max_traj_len,
-			'use_playback_reactive': args.use_playback_reactive,
-			'extract_core':bool(args.extract_core),
-			'extract_temporal':False,
-			'extract_well_behaved':bool(args.extract_well_behaved),
-			'extract_neighbor_features':bool(args.extract_neighbor_features),
-			'extract_carlidar_rangerate':bool(args.extract_carlidar_rangerate),
-			'carlidar_nbeams':args.carlidar_nbeams,
-			'roadlidar_nbeams':args.roadlidar_nbeams,
-			'roadlidar_nlanes':2,
-			'carlidar_max_range':100.,
-			'roadlidar_max_range':100.}
+    'nsteps': args.max_traj_len,
+            'use_playback_reactive': args.use_playback_reactive,
+            'extract_core':bool(args.extract_core),
+            'extract_temporal':False,
+            'extract_well_behaved':bool(args.extract_well_behaved),
+            'extract_neighbor_features':bool(args.extract_neighbor_features),
+            'extract_carlidar_rangerate':bool(args.extract_carlidar_rangerate),
+            'carlidar_nbeams':args.carlidar_nbeams,
+            'roadlidar_nbeams':args.roadlidar_nbeams,
+            'roadlidar_nlanes':2,
+            'carlidar_max_range':100.,
+            'roadlidar_max_range':100.}
 
 if not args.extract_carlidar:
-	env_dict['carlidar_nbeams'] = 0
+    env_dict['carlidar_nbeams'] = 0
 if not args.extract_roadlidar:
-	env_dict['roadlidar_nbeams'] = 0
+    env_dict['roadlidar_nbeams'] = 0
 
 JuliaEnvWrapper.set_initials(args.env_name, 1, env_dict)
 gym.envs.register(
-	id=env_id,
-	entry_point='rltools.envs.julia_sim:JuliaEnvWrapper',
-	timestep_limit=999,
-	reward_threshold=195.0,
+    id=env_id,
+    entry_point='rltools.envs.julia_sim:JuliaEnvWrapper',
+    timestep_limit=999,
+    reward_threshold=195.0,
 )
 
-expert_data, _ = rltools.util.load_trajs(expert_data_path,args.limit_trajs, swap = False)
-expert_data_stacked  = rltools.util.prepare_trajs(expert_data['exobs_B_T_Do'], expert_data['exa_B_T_Da'], expert_data['exlen_B'],
-												  labeller= None)
+expert_data, _ = rltools.util.load_trajs(
+    expert_data_path,args.limit_trajs, swap=False)
+expert_data_stacked  = rltools.util.prepare_trajs(
+    expert_data['exobs_B_T_Do'], expert_data['exa_B_T_Da'], 
+    expert_data['exlen_B'], labeller=None)
 
 # normalization statistics extracted from expert dataset
 initial_obs_mean = expert_data_stacked['exobs_Bstacked_Do'].mean(axis= 0)
@@ -215,7 +229,7 @@ roadlidar_input_shape = (1, env_dict["roadlidar_nbeams"],1)
 if env_dict["extract_temporal"]:
     temporal_indices = range(0,6)
     if env_dict["extract_core"]:
-	temporal_indices = [t_ix + 8 for t_ix in temporal_indices]
+        temporal_indices = [t_ix + 8 for t_ix in temporal_indices]
 
 else:
     temporal_indices = None
@@ -230,18 +244,16 @@ if args.policy_type == 'mlp':
             policy.load_params(args.policy_ckpt_name, args.policy_ckpt_itr)
 
 elif args.policy_type == 'gru':
-	if p_hspec == []:
-		feat_mlp = None
-	else:
-		feat_mlp = MLP('mlp_policy', p_hspec[-1], p_hspec[:-1], nonlinearity, nonlinearity,
-					   input_shape= (np.prod(env.spec.observation_space.shape),))
+    if p_hspec == []:
+        feat_mlp = None
+    else:
+        feat_mlp = MLP('mlp_policy', p_hspec[-1], p_hspec[:-1], nonlinearity, nonlinearity,
+                       input_shape= (np.prod(env.spec.observation_space.shape),))
 
-	policy = GaussianGRUPolicy(name= 'gru_policy', env_spec= env.spec,
+    policy = GaussianGRUPolicy(name= 'gru_policy', env_spec= env.spec,
                                hidden_dim= args.gru_dim,
                               feature_network=feat_mlp,
                               state_include_action=False)
-
-
 else:
     raise NotImplementedError
 
@@ -265,39 +277,39 @@ else:
 
 # create adversary
 reward = RewardMLP('mlp_reward', 1, r_hspec, nonlinearity, tf.nn.sigmoid,
-				   input_shape= (np.prod(env.spec.observation_space.shape) + env.action_dim,)
-				   )
+                   input_shape= (np.prod(env.spec.observation_space.shape) + env.action_dim,)
+                   )
 
 algo = GAIL(
-	env=env,
-	policy=policy,
-	baseline=baseline,
-	reward=reward,
-	expert_data=expert_data,
-	batch_size= args.trpo_batch_size,
-	gail_batch_size=args.gail_batch_size,
-	max_path_length=args.max_traj_len,
-	n_itr=args.n_iter,
-	discount=args.discount,
-	step_size=args.trpo_step_size,
-	force_batch_sampler= True,
-	whole_paths= True,
-	adam_steps= args.adam_steps,
-	decay_rate= args.decay_rate,
-	decay_steps= args.decay_steps,
-	act_mean= initial_act_mean,
-	act_std= initial_act_std,
-	freeze_upper = args.freeze_upper,
-	freeze_lower = args.freeze_lower,
-	fo_optimizer_cls=tf.train.AdamOptimizer,
-	load_params_args = None,
-	temporal_indices = temporal_indices,
-	temporal_noise_thresh = args.temporal_noise_thresh,
-	fo_optimizer_args= dict(learning_rate = args.adam_lr,
-							beta1 = args.adam_beta1,
-							beta2 = args.adam_beta2,
-							epsilon= args.adam_epsilon),
-	optimizer=ConjugateGradientOptimizer(hvp_approach=FiniteDifferenceHvp(base_eps=1e-5))
+    env=env,
+    policy=policy,
+    baseline=baseline,
+    reward=reward,
+    expert_data=expert_data,
+    batch_size= args.trpo_batch_size,
+    gail_batch_size=args.gail_batch_size,
+    max_path_length=args.max_traj_len,
+    n_itr=args.n_iter,
+    discount=args.discount,
+    step_size=args.trpo_step_size,
+    force_batch_sampler= True,
+    whole_paths= True,
+    adam_steps= args.adam_steps,
+    decay_rate= args.decay_rate,
+    decay_steps= args.decay_steps,
+    act_mean= initial_act_mean,
+    act_std= initial_act_std,
+    freeze_upper = args.freeze_upper,
+    freeze_lower = args.freeze_lower,
+    fo_optimizer_cls=tf.train.AdamOptimizer,
+    load_params_args = None,
+    temporal_indices = temporal_indices,
+    temporal_noise_thresh = args.temporal_noise_thresh,
+    fo_optimizer_args= dict(learning_rate = args.adam_lr,
+                            beta1 = args.adam_beta1,
+                            beta2 = args.adam_beta2,
+                            epsilon= args.adam_epsilon),
+    optimizer=ConjugateGradientOptimizer(hvp_approach=FiniteDifferenceHvp(base_eps=1e-5))
 )
 
 # use date and time to create new logging directory for each run

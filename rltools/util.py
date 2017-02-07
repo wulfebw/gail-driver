@@ -44,7 +44,7 @@ def load_trajs(filename, limit_trajs, swap= True):
         exlen_B = lng[:dset_size,...][...]
 
     #compute trajectory intervals from lengths.
-    interval= np.ones(full_dset_size,).astype(int)
+    interval = np.ones(full_dset_size,).astype(int)
     for i, l in enumerate(exlen_B):
         if i == 0:
             continue
@@ -74,16 +74,19 @@ def load_trajs(filename, limit_trajs, swap= True):
           }
     return data, stats
 
-def prepare_trajs(exobs_B_T_Do, exa_B_T_Da, exlen_B, data_subsamp_freq= 1, labeller= None):
+def prepare_trajs(exobs_B_T_Do, exa_B_T_Da, exlen_B, subsamp_freq=1, labeller=None):
     print('exlen_B inside: %i'%exlen_B.shape[0])
 
-    start_times_B = np.random.RandomState(0).randint(0, data_subsamp_freq, size=exlen_B.shape[0])
+    start_times_B = np.random.RandomState(0).randint(
+        0, subsamp_freq, size=exlen_B.shape[0])
+
     exobs_Bstacked_Do = np.concatenate(
-        [exobs_B_T_Do[i,start_times_B[i]:l:data_subsamp_freq,:] for i, l in enumerate(exlen_B)],
-        axis=0)
+        [exobs_B_T_Do[i,start_times_B[i]:l:subsamp_freq,:] 
+            for i, l in enumerate(exlen_B)], axis=0)
+
     exa_Bstacked_Da = np.concatenate(
-        [exa_B_T_Da[i,start_times_B[i]:l:data_subsamp_freq,:] for i, l in enumerate(exlen_B)],
-        axis=0)
+        [exa_B_T_Da[i,start_times_B[i]:l:subsamp_freq,:] 
+            for i, l in enumerate(exlen_B)], axis=0)
 
     assert exobs_Bstacked_Do.shape[0] == exa_Bstacked_Da.shape[0] 
 
